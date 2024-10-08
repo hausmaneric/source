@@ -17,10 +17,18 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs';
 export class AppComponent {
   statusMessage: string = '';
   challenge: Uint8Array | null = null; // Armazena o desafio atual
-  registeredId: Uint8Array | any = null; // Armazena o ID da credencial registrada
+  registeredId: Uint8Array | null = null; // Armazena o ID da credencial registrada
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
 
+  // Função para gerar um desafio aleatório
+  private generateChallenge(): Uint8Array {
+    const array = new Uint8Array(32);
+    window.crypto.getRandomValues(array);
+    return array;
+  }
+
+  // Registro da credencial
   async register() {
     if (isPlatformBrowser(this.platformId)) {
       try {
@@ -42,9 +50,8 @@ export class AppComponent {
         };
 
         this.statusMessage = 'Registrando...';
-        const credential = await navigator.credentials.create({ publicKey });
-        if(credential)
-        this.registeredId = credential.id; // Armazenar o ID da credencial
+        const credential: any = await navigator.credentials.create({ publicKey });
+        this.registeredId = new Uint8Array(credential.id); // Armazenar o ID da credencial
 
         console.log('Credencial registrada:', credential);
         this.statusMessage = 'Registro bem-sucedido!';
@@ -57,6 +64,7 @@ export class AppComponent {
     }
   }
 
+  // Autenticação da credencial
   async authenticate() {
     if (isPlatformBrowser(this.platformId)) {
       if (!this.registeredId || !this.challenge) {
@@ -80,6 +88,11 @@ export class AppComponent {
         this.statusMessage = 'Aguardando autenticação...';
         const credential = await navigator.credentials.get({ publicKey });
 
+        if (!credential) {
+          this.statusMessage = 'Nenhuma credencial retornada.';
+          return;
+        }
+
         this.statusMessage = 'Autenticação bem-sucedida!';
         console.log('Credenciais obtidas:', credential);
       } catch (error) {
@@ -89,11 +102,5 @@ export class AppComponent {
     } else {
       this.statusMessage = 'Este recurso não está disponível neste dispositivo.';
     }
-  }
-
-  private generateChallenge(): Uint8Array {
-    const array = new Uint8Array(32);
-    window.crypto.getRandomValues(array);
-    return array;
   }
 }
