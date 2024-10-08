@@ -1,5 +1,6 @@
 <div>
   <h3>Leitor de Digital</h3>
+  <button (click)="register()">Registrar Impressão Digital</button>
   <button (click)="authenticate()">Ler Impressão Digital</button>
   <p *ngIf="statusMessage">{{ statusMessage }}</p>
 </div>
