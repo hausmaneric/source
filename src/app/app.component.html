@@ -1,6 +1,5 @@
 <div>
-  <webcam [trigger]="triggerObservable" (imageCapture)="handleImage($event)"></webcam>
-  <button (click)="triggerSnapshot()">Capture Face</button>
+  <h3>Leitor de Digital</h3>
+  <button (click)="authenticate()">Ler Impressão Digital</button>
+  <p *ngIf="statusMessage">{{ statusMessage }}</p>
 </div>
-<div *ngIf="authenticated === true">Authentication Successful</div>
-<div *ngIf="authenticated === false">Authentication Failed</div>
