@@ -15,36 +15,37 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  statusMessage: string = ''; // Mensagem de status para o usuário
+  statusMessage: string = '';
+  challenge: Uint8Array | null = null; // Armazena o desafio atual
+  registeredId: Uint8Array | any = null; // Armazena o ID da credencial registrada
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
 
   async register() {
     if (isPlatformBrowser(this.platformId)) {
       try {
+        this.challenge = this.generateChallenge(); // Gerar novo desafio
         const publicKey: any = {
-          challenge: new Uint8Array(32), // Desafio aleatório
-          rp: {
-            name: 'My App',
-          },
+          challenge: this.challenge,
+          rp: { name: 'My App' },
           user: {
             id: new Uint8Array(32), // ID do usuário, deve ser único
             name: 'user@example.com',
             displayName: 'User Example',
           },
-          pubKeyCredParams: [{ type: 'public-key', alg: -7 }], // Algoritmo para gerar a chave
+          pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
           timeout: 60000,
           authenticatorSelection: {
-            authenticatorAttachment: 'platform', // Usar o autenticador do dispositivo
+            authenticatorAttachment: 'platform',
             userVerification: 'preferred',
           },
         };
 
         this.statusMessage = 'Registrando...';
-
         const credential = await navigator.credentials.create({ publicKey });
+        if(credential)
+        this.registeredId = credential.id; // Armazenar o ID da credencial
 
-        // Aqui você deve enviar a credencial para o seu servidor para armazená-la
         console.log('Credencial registrada:', credential);
         this.statusMessage = 'Registro bem-sucedido!';
       } catch (error) {
@@ -58,12 +59,17 @@ export class AppComponent {
 
   async authenticate() {
     if (isPlatformBrowser(this.platformId)) {
+      if (!this.registeredId || !this.challenge) {
+        this.statusMessage = 'Credencial não registrada ou desafio ausente.';
+        return;
+      }
+
       try {
         const publicKey: any = {
-          challenge: new Uint8Array(32), // Desafio aleatório
+          challenge: this.generateChallenge(), // Novo desafio para autenticação
           allowCredentials: [
             {
-              id: new Uint8Array(32), // ID da chave registrada, substitua conforme necessário
+              id: this.registeredId, // ID da credencial registrada
               type: 'public-key',
             },
           ],
@@ -72,7 +78,6 @@ export class AppComponent {
         };
 
         this.statusMessage = 'Aguardando autenticação...';
-
         const credential = await navigator.credentials.get({ publicKey });
 
         this.statusMessage = 'Autenticação bem-sucedida!';
@@ -84,5 +89,11 @@ export class AppComponent {
     } else {
       this.statusMessage = 'Este recurso não está disponível neste dispositivo.';
     }
+  }
+
+  private generateChallenge(): Uint8Array {
+    const array = new Uint8Array(32);
+    window.crypto.getRandomValues(array);
+    return array;
   }
 }
