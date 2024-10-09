@@ -17,13 +17,18 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs';
 export class AppComponent {
   statusMessage: string = '';
   challenge: Uint8Array | null = null;
-  registeredId: Uint8Array | null = null;
+  registeredId: string | null = null;  // Armazenar o ID como string
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
 
-  // Função para converter Uint8Array para Base64
-  uint8ArrayToBase64(uint8Array: Uint8Array): string {
-    return btoa(String.fromCharCode(...uint8Array));
+  // Função para converter ArrayBuffer ou qualquer binário em Base64
+  arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const uint8Array = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < uint8Array.byteLength; i++) {
+      binary += String.fromCharCode(uint8Array[i]);
+    }
+    return window.btoa(binary);  // Converte para Base64
   }
 
   // Função para gerar um desafio aleatório
@@ -55,9 +60,13 @@ export class AppComponent {
 
         this.statusMessage = 'Registrando...';
         const credential: any = await navigator.credentials.create({ publicKey });
-        this.registeredId = new Uint8Array(credential.id); // Armazenar o ID da credencial
 
-        this.statusMessage = 'Registro bem-sucedido!';
+        if (credential) {
+          this.registeredId = this.arrayBufferToBase64(credential.rawId);  // Armazenar ID como Base64
+          this.statusMessage = 'Registro bem-sucedido!';
+        } else {
+          this.statusMessage = 'Falha no registro.';
+        }
       } catch (error) {
         this.statusMessage = 'Erro ao registrar: ' + error;
       }
@@ -78,7 +87,7 @@ export class AppComponent {
           challenge: this.generateChallenge(),
           allowCredentials: [
             {
-              id: this.registeredId,
+              id: Uint8Array.from(atob(this.registeredId), c => c.charCodeAt(0)),  // Convertendo de Base64 para Uint8Array
               type: 'public-key',
             },
           ],
@@ -89,7 +98,11 @@ export class AppComponent {
         this.statusMessage = 'Aguardando autenticação...';
         const credential = await navigator.credentials.get({ publicKey });
 
-        this.statusMessage = 'Autenticação bem-sucedida!';
+        if (credential) {
+          this.statusMessage = 'Autenticação bem-sucedida!';
+        } else {
+          this.statusMessage = 'Falha na autenticação.';
+        }
       } catch (error) {
         this.statusMessage = 'Erro ao autenticar: ' + error;
       }
