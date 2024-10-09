@@ -21,17 +21,6 @@ export class AppComponent {
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
 
-  // Função para converter ArrayBuffer ou qualquer binário em Base64
-  arrayBufferToBase64(buffer: ArrayBuffer): string {
-    const uint8Array = new Uint8Array(buffer);
-    let binary = '';
-    for (let i = 0; i < uint8Array.byteLength; i++) {
-      binary += String.fromCharCode(uint8Array[i]);
-    }
-    return window.btoa(binary);  // Converte para Base64
-  }
-
-  // Função para gerar um desafio aleatório
   private generateChallenge(): Uint8Array {
     const array = new Uint8Array(32);
     window.crypto.getRandomValues(array);
@@ -62,8 +51,8 @@ export class AppComponent {
         const credential: any = await navigator.credentials.create({ publicKey });
 
         if (credential) {
-          const registeredId = this.arrayBufferToBase64(credential.rawId);  // Armazenar ID como Base64
-          this.registeredIds.push(registeredId);  // Adicionar ao array de IDs
+          const registeredId = this.arrayBufferToBase64(credential.rawId);
+          this.registeredIds.push(registeredId);
           this.statusMessage = `Registro bem-sucedido! IDs registrados: ${this.registeredIds.join(', ')}`;
         } else {
           this.statusMessage = 'Falha no registro.';
@@ -73,6 +62,16 @@ export class AppComponent {
       }
     } else {
       this.statusMessage = 'Este recurso não está disponível neste dispositivo.';
+    }
+  }
+
+  async removeCredential() {
+    if (this.registeredIds.length > 0) {
+      // Limpar o ID mais antigo ou específico que você quer remover
+      this.registeredIds.pop();  // Exemplo: removendo o último ID
+      this.statusMessage = `Credencial removida! IDs restantes: ${this.registeredIds.join(', ')}`;
+    } else {
+      this.statusMessage = 'Nenhuma credencial registrada para remover.';
     }
   }
 
@@ -87,7 +86,7 @@ export class AppComponent {
         const publicKey: any = {
           challenge: this.generateChallenge(),
           allowCredentials: this.registeredIds.map(id => ({
-            id: Uint8Array.from(atob(id), c => c.charCodeAt(0)),  // Convertendo de Base64 para Uint8Array
+            id: Uint8Array.from(atob(id), c => c.charCodeAt(0)),
             type: 'public-key',
           })),
           timeout: 60000,
@@ -108,5 +107,14 @@ export class AppComponent {
     } else {
       this.statusMessage = 'Este recurso não está disponível neste dispositivo.';
     }
+  }
+
+  arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const uint8Array = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < uint8Array.byteLength; i++) {
+      binary += String.fromCharCode(uint8Array[i]);
+    }
+    return window.btoa(binary);
   }
 }
