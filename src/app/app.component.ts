@@ -16,11 +16,12 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs';
 })
 export class AppComponent {
   statusMessage: string = '';
-  challenge: Uint8Array | null = null; // Armazena o desafio atual
-  registeredId: Uint8Array | null = null; // Armazena o ID da credencial registrada
+  challenge: Uint8Array | null = null;
+  registeredId: Uint8Array | null = null;
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
 
+  // Função para converter Uint8Array para Base64
   uint8ArrayToBase64(uint8Array: Uint8Array): string {
     return btoa(String.fromCharCode(...uint8Array));
   }
@@ -32,16 +33,15 @@ export class AppComponent {
     return array;
   }
 
-  // Registro da credencial
   async register() {
     if (isPlatformBrowser(this.platformId)) {
       try {
-        this.challenge = this.generateChallenge(); // Gerar novo desafio
+        this.challenge = this.generateChallenge();
         const publicKey: any = {
           challenge: this.challenge,
           rp: { name: 'My App' },
           user: {
-            id: new Uint8Array(32), // ID do usuário, deve ser único
+            id: new Uint8Array(32), // ID do usuário
             name: 'user@example.com',
             displayName: 'User Example',
           },
@@ -57,18 +57,15 @@ export class AppComponent {
         const credential: any = await navigator.credentials.create({ publicKey });
         this.registeredId = new Uint8Array(credential.id); // Armazenar o ID da credencial
 
-        console.log('Credencial registrada:', credential);
         this.statusMessage = 'Registro bem-sucedido!';
       } catch (error) {
         this.statusMessage = 'Erro ao registrar: ' + error;
-        console.error('Erro ao registrar:', error);
       }
     } else {
       this.statusMessage = 'Este recurso não está disponível neste dispositivo.';
     }
   }
 
-  // Autenticação da credencial
   async authenticate() {
     if (isPlatformBrowser(this.platformId)) {
       if (!this.registeredId || !this.challenge) {
@@ -78,10 +75,10 @@ export class AppComponent {
 
       try {
         const publicKey: any = {
-          challenge: this.generateChallenge(), // Novo desafio para autenticação
+          challenge: this.generateChallenge(),
           allowCredentials: [
             {
-              id: this.registeredId, // ID da credencial registrada
+              id: this.registeredId,
               type: 'public-key',
             },
           ],
@@ -92,16 +89,9 @@ export class AppComponent {
         this.statusMessage = 'Aguardando autenticação...';
         const credential = await navigator.credentials.get({ publicKey });
 
-        if (!credential) {
-          this.statusMessage = 'Nenhuma credencial retornada.';
-          return;
-        }
-
         this.statusMessage = 'Autenticação bem-sucedida!';
-        console.log('Credenciais obtidas:', credential);
       } catch (error) {
         this.statusMessage = 'Erro ao autenticar: ' + error;
-        console.error('Erro ao autenticar:', error);
       }
     } else {
       this.statusMessage = 'Este recurso não está disponível neste dispositivo.';
