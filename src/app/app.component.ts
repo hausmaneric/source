@@ -17,7 +17,7 @@ import FingerprintJS from '@fingerprintjs/fingerprintjs';
 export class AppComponent {
   statusMessage: string = '';
   challenge: Uint8Array | null = null;
-  registeredId: string | null = null;  // Armazenar o ID como string
+  registeredIds: string[] = [];  // Array para armazenar múltiplos IDs
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
 
@@ -62,8 +62,9 @@ export class AppComponent {
         const credential: any = await navigator.credentials.create({ publicKey });
 
         if (credential) {
-          this.registeredId = this.arrayBufferToBase64(credential.rawId);  // Armazenar ID como Base64
-          this.statusMessage = 'Registro bem-sucedido!';
+          const registeredId = this.arrayBufferToBase64(credential.rawId);  // Armazenar ID como Base64
+          this.registeredIds.push(registeredId);  // Adicionar ao array de IDs
+          this.statusMessage = `Registro bem-sucedido! IDs registrados: ${this.registeredIds.join(', ')}`;
         } else {
           this.statusMessage = 'Falha no registro.';
         }
@@ -77,20 +78,18 @@ export class AppComponent {
 
   async authenticate() {
     if (isPlatformBrowser(this.platformId)) {
-      if (!this.registeredId || !this.challenge) {
-        this.statusMessage = 'Credencial não registrada ou desafio ausente.';
+      if (this.registeredIds.length === 0 || !this.challenge) {
+        this.statusMessage = 'Nenhuma credencial registrada ou desafio ausente.';
         return;
       }
 
       try {
         const publicKey: any = {
           challenge: this.generateChallenge(),
-          allowCredentials: [
-            {
-              id: Uint8Array.from(atob(this.registeredId), c => c.charCodeAt(0)),  // Convertendo de Base64 para Uint8Array
-              type: 'public-key',
-            },
-          ],
+          allowCredentials: this.registeredIds.map(id => ({
+            id: Uint8Array.from(atob(id), c => c.charCodeAt(0)),  // Convertendo de Base64 para Uint8Array
+            type: 'public-key',
+          })),
           timeout: 60000,
           userVerification: 'preferred',
         };

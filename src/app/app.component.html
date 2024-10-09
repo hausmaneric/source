@@ -1,7 +1,7 @@
 <div>
-  <p *ngIf="registeredId">ID Registrado: {{ registeredId }}</p>
+  <p *ngIf="registeredIds.length > 0">IDs Registrados: {{ registeredIds.join(', ') }}</p>
   <p>Status: {{ statusMessage }}</p>
 
-  <button (click)="register()">Registrar</button>
-  <button (click)="authenticate()">Autenticar</button>
+  <button (click)="register()">Registrar Digital</button>
+  <button (click)="authenticate()">Autenticar Digital</button>
 </div>
