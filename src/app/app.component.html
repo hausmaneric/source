@@ -1,7 +1,7 @@
 <div>
-  <h2>Leitor de Digital</h2>
-  <button (click)="register()">Registrar Impressão Digital</button>
-  <button (click)="authenticate()">Ler Impressão Digital</button>
-  <p>{{ statusMessage }}</p>
-  <p>{{registeredId}}</p>
+  <p *ngIf="registeredId">ID Registrado: {{ uint8ArrayToBase64(registeredId) }}</p>
+  <p>Status: {{ statusMessage }}</p>
+
+  <button (click)="register()">Registrar</button>
+  <button (click)="authenticate()">Autenticar</button>
 </div>

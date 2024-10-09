@@ -21,6 +21,10 @@ export class AppComponent {
 
   constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
 
+  uint8ArrayToBase64(uint8Array: Uint8Array): string {
+    return btoa(String.fromCharCode(...uint8Array));
+  }
+
   // Função para gerar um desafio aleatório
   private generateChallenge(): Uint8Array {
     const array = new Uint8Array(32);
